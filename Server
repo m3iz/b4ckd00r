@@ -15,13 +15,15 @@ SOCKET Listen;
 int ClientCount = 1;
 
 void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_addr) {
-	if (Connect1 = accept(Listen1, NULL, NULL)) {
-		ClientCount++;
-		Connections[ClientCount] = Connect1;
-		printf("Client connected\n");
-		printf("+%s [%s] new connect!\n",
-			(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
-		PRINTNUSERS
+	while (1) {
+		if (Connect1 = accept(Listen1, NULL, NULL)) {
+			ClientCount++;
+			Connections[ClientCount] = Connect1;
+			printf("Client connected\n");
+			printf("+%s [%s] new connect!\n",
+				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
+			PRINTNUSERS
+		}
 	}
 }
 
@@ -68,12 +70,12 @@ int main() {
 	{
 		char m_connect[256] = "";
 		if (Connect = accept(Listen, NULL, NULL)) {
-			
+
 			printf("Client connected\n");
 			printf("+%s [%s] new connect!\n",
 				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
 			PRINTNUSERS
-			std::cin >> m_connect;
+				std::cin >> m_connect;
 			Connections[ClientCount] = Connect;
 			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
 			std::thread t(concheck, Connect, Listen, hst, client_addr);
@@ -82,15 +84,9 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			std::cin >> m_connect;
-			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
-			system("pause");
-			send(Connections[ClientCount+1], m_connect, strlen(m_connect), NULL);
-			system("pause");
-			send(Connections[ClientCount-1], m_connect, strlen(m_connect), NULL);
-			system("pause");
-			send(Connections[ClientCount - 2], m_connect, strlen(m_connect), NULL);
-			system("pause");
-			send(Connections[ClientCount + 2], m_connect, strlen(m_connect), NULL);
+			for (int i = 0; i <= ClientCount; i++) {
+				send(Connections[i], m_connect, strlen(m_connect), NULL);
+			}
 		}
 	}
 	return 1;
