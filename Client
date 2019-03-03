@@ -1,81 +1,90 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS// Пример простого TCP-клиента
+#include <stdio.h>
+#include <string.h>
+#include <winsock2.h>
+#include <windows.h>
+
+#define PORT 666
+#define SERVERADDR "192.168.1.69" //Звёздочками пометил свой IP
 #pragma comment(lib,"Ws2_32.lib")
-#include <WinSock2.h>
-#include <iostream>
-#include <WS2tcpip.h>
-#include <string>
-SOCKET Connect;
-SOCKET* Connections;
-SOCKET Listen;
 
-int ClientCount = 0;
-
-void SendMessageToClient(int ID)
+int main(int argc, char* argv[])
 {
-	char*buffer = new char[1024];
-	for (;; Sleep(75))
+	char buff[1024];
+	printf("TCP DEMO CLIENT\n");
+
+	// Шаг 1 - инициализация библиотеки Winsock
+	if (WSAStartup(0x202, (WSADATA *)&buff[0]))
 	{
-		memset(buffer, 0, sizeof(buffer));
-		if (recv(Connections[ID], buffer, 1024, NULL))
+		printf("WSAStart error %d\n", WSAGetLastError());
+		return -1;
+	}
+
+	// Шаг 2 - создание сокета
+	SOCKET my_sock;
+	my_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (my_sock < 0)
+	{
+		printf("Socket() error %d\n", WSAGetLastError());
+		system("pause");
+		return -1;
+	}
+
+	// Шаг 3 - установка соединения
+	// заполнение структуры sockaddr_in - указание адреса и порта сервера
+	sockaddr_in dest_addr;
+	dest_addr.sin_family = AF_INET;
+	dest_addr.sin_port = htons(PORT);
+	HOSTENT *hst;
+
+	// преобразование IP адреса из символьного в сетевой формат
+	if (inet_addr(SERVERADDR) != INADDR_NONE)
+		dest_addr.sin_addr.s_addr = inet_addr(SERVERADDR);
+	else
+	{
+		// попытка получить IP адрес по доменному имени сервера
+		if (hst = gethostbyname(SERVERADDR))
+			// hst->h_addr_list содержит не массив адресов,
+			// а массив указателей на адреса
+			((unsigned long *)&dest_addr.sin_addr)[0] =
+			((unsigned long **)hst->h_addr_list)[0][0];
+		else
 		{
-			printf(buffer);
-			printf("\n");
-			for (int i = 0; i <= ClientCount; i++)
-			{
-				send(Connections[i], buffer, strlen(buffer), NULL);
-			}
+			printf("Invalid address %s\n", SERVERADDR);
+			closesocket(my_sock);
+			WSACleanup();
+			system("pause");
+			return -1;
 		}
 	}
-	delete buffer;
-}
 
-int main() {
-	setlocale(LC_ALL, "russian");
-	////СоКЕты
-	WSAData data;
-	WORD version = MAKEWORD(2, 2); ///socket version
-	int res = WSAStartup(version, &data);
-	if (res != 0)
+	// адрес сервера получен - пытаемся установить соединение
+	if (connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr)))
 	{
-		return 0;
+		printf("Connect error %d\n", WSAGetLastError());
+		while (connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr))) {
+			Sleep(5000);
+			if (!(connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr))))break;
+		}
 	}
 
-	struct addrinfo hints;
-	struct addrinfo* result;
+	printf("Soedinenie s %s uspeshno ustanovlenno\n \
+            Type quit for quit\n\n", SERVERADDR);
 
-	Connections = (SOCKET*)calloc(64, sizeof(SOCKET));
-
-	ZeroMemory(&hints, sizeof(hints));
-
-	hints.ai_family = AF_INET;
-	hints.ai_flags = AI_PASSIVE;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	getaddrinfo(NULL, "666", &hints, &result);
-
-	Listen = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	bind(Listen, result->ai_addr, result->ai_addrlen);
-	listen(Listen, SOMAXCONN);
-
-	freeaddrinfo(result);
-
-	printf("Start server...");
-	for (;; Sleep(75))
+	// Шаг 4 - чтение и передача сообщений
+	int nsize;
+	while ((nsize = recv(my_sock, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR)
 	{
-		char m_connect[256] = "";
-		if (Connect = accept(Listen, NULL, NULL)) {
-			printf("Client connected\n");
-			std::cin >> m_connect;
-			Connections[ClientCount] = Connect;
-			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
-			//ClientCount++;
-			//CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)SendMessageToClient, (LPVOID)(ClientCount - 1), NULL, NULL);
-		}
-		while (true) {
-			char m_connect[256] = "";
-			std::cin >> m_connect;
-			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
-		}
+		// ставим завершающий ноль в конце строки
+		buff[nsize] = 0;
+
+		// выводим на экран
+		printf("S=>C:%s", buff);
+
 	}
-	return 1;
+	printf("Recv error %d\n", WSAGetLastError());
+	closesocket(my_sock);
+	WSACleanup();
+	system("pause");
+	return -1;
 }
