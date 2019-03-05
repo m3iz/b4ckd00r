@@ -1,3 +1,4 @@
+//Server
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
@@ -29,9 +30,9 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 
 int main() {
 	setlocale(LC_ALL, "russian");
-	////СоКЕты
+
 	WSAData data;
-	WORD version = MAKEWORD(2, 2); ///socket version
+	WORD version = MAKEWORD(2, 2);
 	int res = WSAStartup(version, &data);
 	if (res != 0)
 	{
@@ -59,10 +60,9 @@ int main() {
 	freeaddrinfo(result);
 
 	printf("Start server...");
-	SOCKET client_socket; // сокет для клиента
-	sockaddr_in client_addr; // адрес клиента (заполняется системой)
+	SOCKET client_socket; 
+	sockaddr_in client_addr; 
 
-	// функции accept необходимо передать размер структуры
 	int client_addr_size = sizeof(client_addr);
 	HOSTENT *hst;
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
@@ -84,8 +84,24 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			std::cin >> m_connect;
+			std::string op = m_connect;
+			
 			for (int i = 0; i <= ClientCount; i++) {
 				send(Connections[i], m_connect, strlen(m_connect), NULL);
+			}
+			if (op == "--s") {
+				std::cout << "Начинаю передавать файл\n";
+				FILE *in;
+				fopen_s(&in,"C:\\Users\\Explo\\\Desktop\\Client.exe", "rb");
+				while (!feof(in)) {
+					char bufer[1024] = "";
+					int b = fread(bufer, 1, sizeof(bufer), in);
+					int size = ftell(in);
+					printf("bytes read: %d, part:%d, pos: %ld \n", b, size);
+					if (b != 0)
+						send(Connections[ClientCount], bufer, b, 0);
+				}
+				std::cout << "файл отправлен!\n";
 			}
 		}
 	}
