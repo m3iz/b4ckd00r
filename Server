@@ -60,7 +60,6 @@ int main() {
 	freeaddrinfo(result);
 
 	printf("Start server...");
-	SOCKET client_socket; 
 	sockaddr_in client_addr; 
 
 	int client_addr_size = sizeof(client_addr);
@@ -75,7 +74,13 @@ int main() {
 			printf("+%s [%s] new connect!\n",
 				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
 			PRINTNUSERS
-				std::cin >> m_connect;
+				int i = 0;
+				char a = getchar();
+				while (a != '\n') {
+					m_connect[i] = a;
+					i++;
+					a = getchar();
+				}
 			Connections[ClientCount] = Connect;
 			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
 			std::thread t(concheck, Connect, Listen, hst, client_addr);
@@ -83,13 +88,17 @@ int main() {
 		}
 		while (true) {
 			char m_connect[256] = "";
-			std::cin >> m_connect;
-			std::string op = m_connect;
-			
+			int i = 0;
+			char a = getchar();
+			while (a != '\n') {
+				m_connect[i] = a;
+				i++;
+				a = getchar();
+			}
 			for (int i = 0; i <= ClientCount; i++) {
 				send(Connections[i], m_connect, strlen(m_connect), NULL);
 			}
-			if (op == "--s") {
+			if (m_connect[2] == 's') {
 				std::cout << "Начинаю передавать файл\n";
 				FILE *in;
 				fopen_s(&in,"C:\\Users\\Explo\\\Desktop\\Client.exe", "rb");
@@ -98,8 +107,7 @@ int main() {
 					int b = fread(bufer, 1, sizeof(bufer), in);
 					int size = ftell(in);
 					printf("bytes read: %d, part:%d, pos: %ld \n", b, size);
-					if (b != 0)
-						send(Connections[ClientCount], bufer, b, 0);
+					if (b != 0) send(Connections[ClientCount], bufer, b, 0);
 				}
 				std::cout << "файл отправлен!\n";
 			}
