@@ -1,26 +1,31 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS// Пример простого TCP-клиента
+//Client
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 #include <winsock2.h>
 #include <windows.h>
 
 #define PORT 666
-#define SERVERADDR "192.168.1.69" //Звёздочками пометил свой IP
+#define SERVERADDR "(*.*.*.*" 
 #pragma comment(lib,"Ws2_32.lib")
 
 int main(int argc, char* argv[])
 {
+	setlocale(LC_ALL,"rus");
 	char buff[1024];
+	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
+		buff[i] = '\0';
+	}
 	printf("TCP DEMO CLIENT\n");
 
-	// Шаг 1 - инициализация библиотеки Winsock
+
 	if (WSAStartup(0x202, (WSADATA *)&buff[0]))
 	{
 		printf("WSAStart error %d\n", WSAGetLastError());
 		return -1;
 	}
 
-	// Шаг 2 - создание сокета
 	SOCKET my_sock;
 	my_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (my_sock < 0)
@@ -30,22 +35,19 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	// Шаг 3 - установка соединения
-	// заполнение структуры sockaddr_in - указание адреса и порта сервера
 	sockaddr_in dest_addr;
 	dest_addr.sin_family = AF_INET;
 	dest_addr.sin_port = htons(PORT);
 	HOSTENT *hst;
 
-	// преобразование IP адреса из символьного в сетевой формат
+
 	if (inet_addr(SERVERADDR) != INADDR_NONE)
 		dest_addr.sin_addr.s_addr = inet_addr(SERVERADDR);
 	else
 	{
-		// попытка получить IP адрес по доменному имени сервера
+
 		if (hst = gethostbyname(SERVERADDR))
-			// hst->h_addr_list содержит не массив адресов,
-			// а массив указателей на адреса
+
 			((unsigned long *)&dest_addr.sin_addr)[0] =
 			((unsigned long **)hst->h_addr_list)[0][0];
 		else
@@ -58,7 +60,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	// адрес сервера получен - пытаемся установить соединение
 	if (connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr)))
 	{
 		printf("Connect error %d\n", WSAGetLastError());
@@ -71,20 +72,54 @@ int main(int argc, char* argv[])
 	printf("Soedinenie s %s uspeshno ustanovlenno\n \
             Type quit for quit\n\n", SERVERADDR);
 
-	// Шаг 4 - чтение и передача сообщений
+
 	int nsize;
 	while ((nsize = recv(my_sock, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR)
 	{
-		// ставим завершающий ноль в конце строки
+
 		buff[nsize] = 0;
 
-		// выводим на экран
-		printf("S=>C:%s", buff);
+		printf("Server=>Client:%s", buff);
 
+		std::string acp = buff;
+		if (acp == "open") {
+			std::cout << "correct\n";
+		}
+		else if (acp=="--s") {
+			HANDLE hFile;
+			hFile = CreateFile("C:\\Users\\User\\Desktop\\temp\\Downloaded.exe",  // имя файла 
+				GENERIC_WRITE,
+				0,
+				NULL,
+				OPEN_ALWAYS,
+				FILE_ATTRIBUTE_NORMAL,
+				NULL);
+			DWORD dwBytesWritten;
+			while (1) {
+				char buff[1028] = "";
+				int nbytes = recv(my_sock, buff, sizeof(buff), 0);
+				std::cout << buff << std::endl;
+				WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
+				if (nbytes == 0) {
+					std::cout << "file downloaded\n";
+					break;
+				}
+				if (nbytes < 0)
+				{
+					std::cout << "Error: " << WSAGetLastError() << std::endl;
+					break;
+				}
+			}
+			std::cout << "Можно выходить\n";
+			CloseHandle(hFile);
+		}
+		else {
+			std::cout << MessageBox(NULL, buff, "Surprise", MB_OK | MB_ICONWARNING);
+		}
 	}
 	printf("Recv error %d\n", WSAGetLastError());
 	closesocket(my_sock);
 	WSACleanup();
 	system("pause");
-	return -1;
+	return 0;
 }
