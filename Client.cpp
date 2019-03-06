@@ -1,4 +1,4 @@
-//Client
+//Client v 2.0
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
 #include <string>
@@ -7,7 +7,7 @@
 #include <windows.h>
 
 #define PORT 666
-#define SERVERADDR "192.168.1.69" 
+#define SERVERADDR "192.168.1.69"
 #pragma comment(lib,"Ws2_32.lib")
 
 using namespace std;
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 				std::cout << "Принимаю файл\n";
 			HANDLE hFile;
 			std::string result = buff + 4;
-			hFile = CreateFile(result.c_str(),  // имя файла 
+			hFile = CreateFile(result.c_str(),  // имя файла
 				GENERIC_WRITE,
 				0,
 				NULL,

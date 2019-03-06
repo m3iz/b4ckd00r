@@ -1,11 +1,11 @@
-//Server
+//Server v 2.0
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
-#include <thread> 
+#include <thread>
 #define PRINTNUSERS if (ClientCount) printf("%d user on-line\n", ClientCount); \
         else printf("No User on line\n");
 
@@ -60,7 +60,7 @@ int main() {
 	freeaddrinfo(result);
 
 	printf("Start server...");
-	sockaddr_in client_addr; 
+	sockaddr_in client_addr;
 
 	int client_addr_size = sizeof(client_addr);
 	HOSTENT *hst;
