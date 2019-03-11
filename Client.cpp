@@ -236,19 +236,15 @@ int main(int argc, char* argv[])
 						bufer[buflen - 1] = '\0';
 						end = true;
 					}
-					else {
-						cout << "net\n";
-					}
 					int size = ftell(in1);
 					send(my_sock, bufer, buflen, 0);
-					if (end2) { cout << bufer; break; }
+					if (end2) {break; }
 				}
 				else {
 					bufer[buflen - 1] = '@';
 					bufer[buflen - 2] = '@';
 					bufer[buflen - 3] = '^';
 					send(my_sock, bufer, buflen, 0);
-					cout << bufer;
 					break;
 				}
 			}
