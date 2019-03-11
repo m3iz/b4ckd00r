@@ -15,6 +15,16 @@ SOCKET Listen;
 
 int ClientCount = 1;
 
+bool checkend(char *arr,int len) {
+	for (int i = 0; i < len-3; i++) {
+		if (arr[i] != '\0')return true;
+		std::cout << "True\n";
+	}
+	std::cout << "FALSE\n";
+	return false;
+
+}
+
 void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_addr) {
 	while (1) {
 		if (Connect1 = accept(Listen1, NULL, NULL)) {
@@ -66,8 +76,6 @@ int main() {
 	int client_addr_size = sizeof(client_addr);
 	HOSTENT *hst;
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
-	for (;; Sleep(75))
-	{
 		char m_connect[256] = "--i";
 		if (Connect = accept(Listen, NULL, NULL)) {
 
@@ -113,7 +121,6 @@ int main() {
 			}
 			else if ((m_connect[2] == 'c') && (m_connect[0] == '-') && ((m_connect[1] == '-'))) {
 				std::cout << "Пытаюсь загрузить скриншот\n";
-				char buff[1024];
 				HANDLE hFile;
 				hFile = CreateFile("screendown.png",
 					GENERIC_WRITE,
@@ -124,26 +131,31 @@ int main() {
 					NULL);
 				DWORD dwBytesWritten;
 				while (1) {
-					char buff[1028] = "";
+					bool exit = false;
+					const int bufsize = 1024;
+					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
-					if ((buff[0] == '@') && (buff[1] == '@') && (buff[2] == '^')) {
-						std::cout << "Screenshot loaded\n"; break;
-					}
-					if ((buff[nbytes-2] == '@') && (buff[nbytes-1] == '@') && (buff[nbytes] == '^')) {
-						std::cout << "Screenshot loaded\n"; break;
-					}
-					WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
 					if (nbytes == 0) {
-						break;
+						std::cout << "Screenshot loaded\n"; break;
 					}
 					if (nbytes < 0)
 					{
 						break;
 					}
+					if ((buff[bufsize-1] == '@') && (buff[bufsize-2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
+					if(exit) {
+						if (!checkend(buff,bufsize)) {
+							std::cout << "Screenshot loaded with func\n"; break;
+						}
+						WriteFile(hFile, buff, nbytes-3, &dwBytesWritten, NULL);
+						std::cout << "Screenshot loaded without func\n"; break;
+					}
+					else {
+						WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
+					}
 				}
 				CloseHandle(hFile);
 			}
 		}
-	}
 	return 1;
 }
