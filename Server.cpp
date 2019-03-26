@@ -1,4 +1,4 @@
-//Server
+//Server из-за времени ожидания передается не сразу 1024 байта с другого компа, а меньше, надо решать проблему с очередью. как вариант сделать паузу, или принимать меньшее кол-во байтов при следующей итерации цикла.
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
@@ -6,14 +6,14 @@
 #include <WS2tcpip.h>
 #include <string>
 #include <thread>
-#define PRINTNUSERS if (ClientCount) printf("%d user on-line\n", ClientCount); \
+#define PRINTNUSERS if (ClientCount>=0) printf("%d user on-line\n", ClientCount); \
         else printf("No User on-line\n");
 
 SOCKET Connect;
 SOCKET* Connections;
 SOCKET Listen;
 
-int ClientCount = 1;
+int ClientCount = 0;
 
 bool checkend(char *arr,int len) {
 	for (int i = 0; i < len-3; i++) {
@@ -39,7 +39,8 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 int main() {
 
 	setlocale(LC_ALL, "russian");
-
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 	WSAData data;
 	WORD version = MAKEWORD(2, 2);
 	int res = WSAStartup(version, &data);
@@ -76,7 +77,7 @@ int main() {
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
 		char m_connect[256] = "--i";
 		if (Connect = accept(Listen, NULL, NULL)) {
-
+			ClientCount++;
 			printf("Client connected\n");
 			printf("+%s [%s] new connect!\n",
 				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
@@ -197,7 +198,7 @@ int main() {
 					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
 					if (nbytes == 0) {
-						std::cout << "file loaded\n"; break;
+						std::cout << "File loaded\n"; break;
 					}
 					if (nbytes < 0)
 					{
@@ -216,6 +217,82 @@ int main() {
 					}
 				}
 				CloseHandle(hFile);
+			}
+			else if ((m_connect[0] == 'd') && (m_connect[1] == 'i') && ((m_connect[2] == 'r'))) {
+			char answ;
+			std::cout << "Press f to download in file and any button to show directories in the console\n";
+			std::cin >> answ;
+			if (answ == 'f') {
+				std::cout << "Trying to download file\n";
+				HANDLE hFile;
+				hFile = CreateFile("files.txt",
+					GENERIC_WRITE,
+					0,
+					NULL,
+					OPEN_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				const int bufsize = 1024;
+				DWORD dwBytesWritten;
+				while (1) {
+					bool exit = false;
+					char buff[bufsize] = "";
+					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					int work = 0;
+					bool find = false;
+					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
+						if ((buff[i] == '\0') && (!find)) { work = 1023 - i; buff[i] = '\n'; find = true; }
+						if ((buff[i] == '^') && (buff[i+1] == '@') && (buff[i+2] == '@')) { exit = true; }
+					}
+					if (nbytes == 0) {
+						std::cout << "File loaded\n"; break;
+					}
+					if (nbytes < 0)
+					{
+						break;
+					}
+					if (exit) {
+						if (!checkend(buff, bufsize)) {
+							std::cout << "File loaded\n"; break;
+						}
+						WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
+						std::cout << "File loaded\n"; break;
+					}
+					else {
+						WriteFile(hFile, buff, nbytes - work, &dwBytesWritten, NULL);
+					}
+				}
+				CloseHandle(hFile);
+			}
+			else {
+				const int bufsize = 1024;
+				bool exit = false;
+				while (1) {
+					char buff[bufsize] = "";
+					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					int work = 0;
+					bool find = false;
+					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
+						if ((buff[i] == '^') && (buff[i+1] == '@') && (buff[i+2] == '@')) { exit = true; }
+					}
+					if (nbytes == 0) {
+						std::cout << "File loaded\n"; break;
+					}
+					if (nbytes < 0)
+					{
+						break;
+					}
+					if (exit) {
+						if (!checkend(buff, bufsize)) {
+							std::cout << "File loaded\n"; break;
+						}
+						std::cout << "\nFile loaded\n"; break;
+					}
+					else {
+						std::cout << buff << std::endl;
+					}
+				}
+			}
 			}
 		}
 	return 1;
