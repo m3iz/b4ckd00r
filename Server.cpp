@@ -127,39 +127,17 @@ int main() {
 				FILE *in;
 				fopen_s(&in, file.c_str(), "rb");
 				std::cout << "Transfering a file\n";
+				////
+				int bytesen = 0;
+				///
 				while (1) {
 					char bufer[buflen] = "";
-					if (!end) {
 						int b = fread(bufer, 1, sizeof(bufer), in);
-						if (b < buflen - 2) {
-							bufer[buflen - 1] = '@';
-							bufer[buflen - 2] = '@';
-							bufer[buflen - 3] = '^';
-							end2 = true;
-						}
-						else if (b == (buflen - 2)) {
-							bufer[buflen - 1] = '\0';
-							bufer[buflen - 2] = '\0';
-							end = true;
-						}
-						else if (b == (buflen - 1)) {
-							bufer[buflen - 1] = '\0';
-							end = true;
-						}
-						int size = ftell(in);
 						send(Connections[ClientCount], bufer, buflen, 0);
-						if (end2) { break; }
-					}
-					else {
-						bufer[buflen - 1] = '@';
-						bufer[buflen - 2] = '@';
-						bufer[buflen - 3] = '^';
-						send(Connections[ClientCount], bufer, buflen, 0);
-						break;
-					}
+						if (b < buflen)break;
 				}
 				fclose(in);
-				std::cout << "File has been sent!\n";
+				std::cout << "File has been sent!"<< bytesen<<" bytes\n";
 			}
 			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'c'))) {
 				std::cout << "Trying to upload a screenshot\n";

