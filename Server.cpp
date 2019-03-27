@@ -105,8 +105,18 @@ int main() {
 				bool end2 = false;
 				std::string file;
 				std::cout << "Enter the file path\n";
-				FILE *in;
+				FILE *in1;
 				std::cin >> file;
+				fopen_s(&in1, file.c_str(), "rb");
+				long int size;
+				fseek(in1, 0, SEEK_END);
+				size = ftell(in1);
+				fclose(in1);
+				char size1[256]="";
+				_itoa_s(size,size1,10);
+				std::cout << "Sending: " << size1 << " bytes\n";
+				send(Connections[ClientCount], size1, sizeof(size1)/sizeof(char), 0);
+				FILE *in;
 				fopen_s(&in, file.c_str(), "rb");
 				std::cout << "Transfering a file\n";
 				while (1) {

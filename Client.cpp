@@ -38,7 +38,7 @@ int main()
 	std::string src = buffer2;
 	std::string dst("C:\\Client.exe");
 	std::string cmd = "copy " + src + " " + dst;
-	system(cmd.c_str());
+//	system(cmd.c_str());
 	char dir[FILENAME_MAX];
 	_getcwd(dir, sizeof(dir));
 	char temp[] = "\\C.exe";
