@@ -115,7 +115,15 @@ int main() {
 				char size1[256]="";
 				_itoa_s(size,size1,10);
 				std::cout << "Sending: " << size1 << " bytes\n";
-				send(Connections[ClientCount], size1, sizeof(size1)/sizeof(char), 0);
+				strcat_s(size1, "%byte%\0");
+				int len = 0;
+				for (int i = 0; i < sizeof(size1) / sizeof(size); i++) {
+					if (size1[i] != '\0')len++;
+					else {
+						break;
+					}
+				}
+				send(Connections[ClientCount], size1, len, 0);
 				FILE *in;
 				fopen_s(&in, file.c_str(), "rb");
 				std::cout << "Transfering a file\n";
