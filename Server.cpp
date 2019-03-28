@@ -1,5 +1,7 @@
-//Server из-за времени ожидания передается не сразу 1024 байта с другого компа, а меньше, надо решать проблему с очередью. как вариант сделать паузу, или принимать меньшее кол-во байтов при следующей итерации цикла.
+//Server
+//Tastks:: Optimize
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
 #include <iostream>
@@ -101,8 +103,6 @@ int main() {
 			}
 			if ((m_connect[0] == '-')&&(m_connect[1]=='-')&&((m_connect[2] == 's'))) {
 				const int buflen = 1024;
-				bool end = false;
-				bool end2 = false;
 				std::string file;
 				std::cout << "Enter the file path\n";
 				FILE *in1;
@@ -133,7 +133,7 @@ int main() {
 				while (1) {
 					char bufer[buflen] = "";
 						int b = fread(bufer, 1, sizeof(bufer), in);
-						send(Connections[ClientCount], bufer, buflen, 0);
+						send(Connections[ClientCount], bufer, b, 0);
 						if (b < buflen)break;
 				}
 				fclose(in);
@@ -151,29 +151,43 @@ int main() {
 					NULL);
 				const int bufsize = 1024;
 				DWORD dwBytesWritten;
-				while (1) {
+				bool start = true;
+				int filesize = 0;
+				int bytesrec = 0;
+				do {
+					int unread = 0;
 					bool exit = false;
 					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					if (start) {
+						for (int k = 0; sizeof(buff) / sizeof(char); k++) {
+							if ((buff[k] == '%') && (buff[k + 1] == 'b') && (buff[k + 2] == 'y') && (buff[k + 3] == 't') && (buff[k + 4] == 'e') && (buff[k + 5] == '%')) {
+								unread += 6;
+								char *temp = new char[unread - 6];
+								strncpy(temp, buff, unread - 6);
+								filesize = atoi(temp);
+								delete[]temp;
+								break;
+							}
+							else {
+								unread++;
+							}
+						}
+						start = false;
+						bytesrec += nbytes - unread;
+					}
+					else {
+						bytesrec += nbytes;
+					}
 					if (nbytes == 0) {
-						std::cout << "Screenshot loaded\n"; break;
+						break;
 					}
 					if (nbytes < 0)
 					{
 						break;
 					}
-					if ((buff[bufsize-1] == '@') && (buff[bufsize-2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
-					if(exit) {
-						if (!checkend(buff,bufsize)) {
-							std::cout << "Screenshot loaded\n"; break;
-						}
-						WriteFile(hFile, buff, nbytes-3, &dwBytesWritten, NULL);
-						std::cout << "Screenshot loaded\n"; break;
-					}
-					else {
-						WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
-					}
-				}
+					WriteFile(hFile, buff + unread, nbytes - unread, &dwBytesWritten, NULL);
+					} while (bytesrec < filesize);
 				CloseHandle(hFile);
 			}
 			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'd'))) {

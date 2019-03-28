@@ -1,4 +1,5 @@
 //Client
+//Tasks: optimize
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
@@ -124,7 +125,7 @@ int main()
 			int filesize = 0;
 			int bytesrec = 0;
 			do {
-				int unread = 0; //
+				int unread = 0;
 				bool exit = false;
 				char buff[bufsize] = "";
 				int nbytes = recv(my_sock, buff, sizeof(buff), 0);
@@ -156,17 +157,7 @@ int main()
 				{
 					break;
 				}
-				if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
-				if (exit) {
-					if (!checkend(buff, bufsize)) {
-						break;
-					}
-					WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
-					break;
-				}
-				else {
-					WriteFile(hFile, buff + unread, nbytes - unread, &dwBytesWritten, NULL);
-				}
+				WriteFile(hFile, buff + unread, nbytes - unread, &dwBytesWritten, NULL);
 			} while (bytesrec < filesize);
 			CloseHandle(hFile);
 		}
@@ -278,44 +269,35 @@ int main()
 			Gdiplus::Bitmap bitmap(hBitmap, NULL);
 			bitmap.Save(L"screen.png", &png);
 			DeleteObject(hBitmap);
-			FILE *in1;
-			fopen_s(&in1, "screen.png", "rb");
 			const int buflen = 1024;
-			bool end = false;
-			bool end2 = false;
-			while (1) {
-				char bufer[buflen] = "";
-				if (!end) {
-					int b = fread(bufer, 1, sizeof(bufer), in1);
-					if (b < buflen - 2) {
-						bufer[buflen - 1] = '@';
-						bufer[buflen - 2] = '@';
-						bufer[buflen - 3] = '^';
-						end2 = true;
-					}
-					else if (b == (buflen - 2)) {
-						bufer[buflen - 1] = '\0';
-						bufer[buflen - 2] = '\0';
-						end = true;
-					}
-					else if (b == (buflen - 1)) {
-						bufer[buflen - 1] = '\0';
-						end = true;
-					}
-					int size = ftell(in1);
-					send(my_sock, bufer, buflen, 0);
-					if (end2) {break; }
-				}
+			FILE *in;
+			fopen_s(&in, "screen.png", "rb");
+			long int size;
+			fseek(in, 0, SEEK_END);
+			size = ftell(in);
+			fclose(in);
+			char size1[256] = "";
+			_itoa_s(size, size1, 10);
+			strcat_s(size1, "%byte%\0");
+			int len = 0;
+			for (int i = 0; i < sizeof(size1) / sizeof(size); i++) {
+				if (size1[i] != '\0')len++;
 				else {
-					bufer[buflen - 1] = '@';
-					bufer[buflen - 2] = '@';
-					bufer[buflen - 3] = '^';
-					send(my_sock, bufer, buflen, 0);
 					break;
 				}
 			}
+			send(my_sock, size1, len, 0);
+			FILE *in1;
+			fopen_s(&in1, "screen.png", "rb");
+			int bytesen = 0;
+			while (1) {
+				char bufer[buflen] = "";
+					int b = fread(bufer, 1, sizeof(bufer), in1);
+					send(my_sock, bufer, b, 0);
+					if (b < buflen)break;
+			}
 			fclose(in1);
-			remove("screen.png");
+			//remove("screen.png");
 
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'l')) {
