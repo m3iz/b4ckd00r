@@ -127,14 +127,12 @@ int main() {
 				FILE *in;
 				fopen_s(&in, file.c_str(), "rb");
 				std::cout << "Transfering a file\n";
-				////
 				int bytesen = 0;
-				///
 				while (1) {
 					char bufer[buflen] = "";
-						int b = fread(bufer, 1, sizeof(bufer), in);
-						send(Connections[ClientCount], bufer, b, 0);
-						if (b < buflen)break;
+					int b = fread(bufer, 1, sizeof(bufer), in);
+					send(Connections[ClientCount], bufer, b, 0);
+					if (b < buflen)break;
 				}
 				fclose(in);
 				std::cout << "File has been sent!"<< bytesen<<" bytes\n";
@@ -193,7 +191,7 @@ int main() {
 			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'd'))) {
 				std::cout << "Trying to download file\n";
 				HANDLE hFile;
-				hFile = CreateFile("download.exe",
+				hFile = CreateFile("download.txt",
 					GENERIC_WRITE,
 					0,
 					NULL,
@@ -202,29 +200,43 @@ int main() {
 					NULL);
 				const int bufsize = 1024;
 				DWORD dwBytesWritten;
-				while (1) {
+				bool start = true;
+				int filesize = 0;
+				int bytesrec = 0;
+				do {
+					int unread = 0;
 					bool exit = false;
 					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
+					if (start) {
+						for (int k = 0; sizeof(buff) / sizeof(char); k++) {
+							if ((buff[k] == '%') && (buff[k + 1] == 'b') && (buff[k + 2] == 'y') && (buff[k + 3] == 't') && (buff[k + 4] == 'e') && (buff[k + 5] == '%')) {
+								unread += 6;
+								char *temp = new char[unread - 6];
+								strncpy(temp, buff, unread - 6);
+								filesize = atoi(temp);
+								delete[]temp;
+								break;
+							}
+							else {
+								unread++;
+							}
+						}
+						start = false;
+						bytesrec += nbytes - unread;
+					}
+					else {
+						bytesrec += nbytes;
+					}
 					if (nbytes == 0) {
-						std::cout << "File loaded\n"; break;
+						break;
 					}
 					if (nbytes < 0)
 					{
 						break;
 					}
-					if ((buff[bufsize - 1] == '@') && (buff[bufsize - 2] == '@') && (buff[bufsize - 3] == '^')) { exit = true; }
-					if (exit) {
-						if (!checkend(buff, bufsize)) {
-							std::cout << "File loaded\n"; break;
-						}
-						WriteFile(hFile, buff, nbytes - 3, &dwBytesWritten, NULL);
-						std::cout << "File loaded\n"; break;
-					}
-					else {
-						WriteFile(hFile, buff, nbytes, &dwBytesWritten, NULL);
-					}
-				}
+					WriteFile(hFile, buff + unread, nbytes - unread, &dwBytesWritten, NULL);
+				} while (bytesrec < filesize);
 				CloseHandle(hFile);
 			}
 			else if ((m_connect[0] == 'd') && (m_connect[1] == 'i') && ((m_connect[2] == 'r'))) {

