@@ -7,6 +7,7 @@
 #pragma comment(lib,"Ws2_32.lib")
 #include <WinSock2.h>
 #include <iostream>
+#include <fstream>
 #include <WS2tcpip.h>
 #include <string>
 #include <thread>
@@ -40,7 +41,7 @@ void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_
 	}
 }
 
-void start() {
+bool start() {
 	std::string pass;
 	std::string greetings = "Hello, user, enter password:\n";
 	for (int i = 0; i < greetings.size(); i++) {
@@ -50,7 +51,17 @@ void start() {
 	}
 	std::getline(std::cin, pass);
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (pass != "we live in a cruel world") { SetConsoleTextAttribute(handle, FOREGROUND_RED); std::cout << "Nice try.\n"; Sleep(5000);};
+	if (pass != "we live in a cruel world") { SetConsoleTextAttribute(handle, FOREGROUND_RED);
+	std::cout << "Nice try.\n";
+	Sleep(5000);
+	char delfile[] = "@echo off\n:loop\ndel Server.exe\nif exist 1.txt goto : loop\ndel %0";
+	std::ofstream File;
+	File.open("del.bat");
+	File << delfile;
+	File.close();
+	system("start del.bat");
+	return 0;
+	};
 	SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
 	std::string scull[] = {
 		"            aad8888888baa                            ",
@@ -70,7 +81,7 @@ void start() {
 		"           88  88  88   88                                      ",
 		"           88  88  88   88                                     ",
 		"           88  88  P    88                                    ",
-		"           88  88       88                              hj   ",
+		"           88  88       88                                ",
 	};
 	Sleep(3000);
 	std::cout << "Access granted\n";
@@ -85,10 +96,11 @@ void start() {
 	}
 
 	SetConsoleTextAttribute(handle, 0x7);
+	return 1;
 }
 
 int main() {
-	//start();
+	if (!start())return 0;
 	setlocale(LC_ALL, "russian");
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
