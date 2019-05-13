@@ -169,9 +169,7 @@ int main() {
 
 	printf("\nStarting server...");
 	sockaddr_in client_addr;
-	//
 
-	//
 	int client_addr_size = sizeof(client_addr);
 	HOSTENT *hst;
 	hst = gethostbyaddr((char *)&client_addr.sin_addr.s_addr, 4, AF_INET);
@@ -375,11 +373,8 @@ int main() {
 					bool exit = false;
 					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
-					int work = 0;
-					bool find = false;
-					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
-						if ((buff[i] == '\0') && (!find)) { work = 1023 - i; buff[i] = '\n'; find = true; }
-						if ((buff[i] == '^') && (buff[i+1] == '@') && (buff[i+2] == '@')) { exit = true; }
+					if ((nbytes == 1) && (buff[0]=='0')) {
+						std::cout << "Error (INVALID_HANDLE_VALUE)"; break;
 					}
 					if (nbytes == 0) {
 						std::cout << "File loaded\n"; break;
@@ -387,6 +382,12 @@ int main() {
 					if (nbytes < 0)
 					{
 						break;
+					}
+					int work = 0;
+					bool find = false;
+					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
+						if ((buff[i] == '\0') && (!find)) { work = 1023 - i; buff[i] = '\n'; find = true; }
+						if ((buff[i] == '^') && (buff[i + 1] == '@') && (buff[i + 2] == '@')) { exit = true; }
 					}
 					if (exit) {
 						if (!checkend(buff, bufsize)) {
@@ -407,10 +408,8 @@ int main() {
 				while (1) {
 					char buff[bufsize] = "";
 					int nbytes = recv(Connect, buff, sizeof(buff), 0);
-					int work = 0;
-					bool find = false;
-					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
-						if ((buff[i] == '^') && (buff[i+1] == '@') && (buff[i+2] == '@')) { exit = true; }
+					if ((nbytes == 1)&&(buff[0]=='0')) {
+						std::cout << "Error (INVALID_HANDLE_VALUE)\n"; break;
 					}
 					if (nbytes == 0) {
 						std::cout << "File loaded\n"; break;
@@ -419,11 +418,14 @@ int main() {
 					{
 						break;
 					}
+					int work = 0;
+					bool find = false;
+					for (int i = 0; i < sizeof(buff) / sizeof(char); i++) {
+						if ((buff[i] == '^') && (buff[i + 1] == '@') && (buff[i + 2] == '@')) { exit = true; break;}
+					}
 					if (exit) {
-						if (!checkend(buff, bufsize)) {
-							std::cout << "File loaded\n"; break;
-						}
-						std::cout << "\nFile loaded\n"; break;
+						std::cout << "\nFile loaded\n";
+						break;
 					}
 					else {
 						std::cout << buff << std::endl;

